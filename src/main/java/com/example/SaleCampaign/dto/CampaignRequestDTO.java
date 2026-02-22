@@ -11,7 +11,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @AllArgsConstructor
@@ -39,5 +41,22 @@ public class CampaignRequestDTO {
             return true;
         }
         return endDate.isAfter(startDate);
+    }
+
+    @AssertTrue(message = "campaignDiscount contains duplicate productId values")
+    public boolean isCampaignDiscountUniqueByProduct() {
+        if (campaignDiscount == null || campaignDiscount.isEmpty()) {
+            return true;
+        }
+        Set<Long> productIds = new HashSet<>();
+        for (CampaignDiscountRequestDTO item : campaignDiscount) {
+            if (item == null || item.getProductId() == null) {
+                continue;
+            }
+            if (!productIds.add(item.getProductId())) {
+                return false;
+            }
+        }
+        return true;
     }
 }

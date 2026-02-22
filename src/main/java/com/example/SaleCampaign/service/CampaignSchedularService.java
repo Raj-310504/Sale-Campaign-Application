@@ -39,7 +39,7 @@ public class CampaignSchedularService {
         List<CampaignModel> active = campaignRepository
                 .findByStartDateLessThanEqualAndEndDateGreaterThanEqual(now, now);
 
-        // If 2 campaigns at same time, get max discount
+        // If 2 campaigns at same time with same productId, get max discount
         Map<Long, Double> maxDiscountByProduct = new HashMap<>();
         for (CampaignModel c : active) {
             for (CampaignProduct cp : c.getCampaignProducts()) {

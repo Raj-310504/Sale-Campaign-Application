@@ -3,6 +3,7 @@ package com.example.SaleCampaign.dto;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,6 +14,7 @@ import lombok.NoArgsConstructor;
 public class CampaignDiscountRequestDTO {
 
     @NotNull(message = "productId is required")
+    @Positive(message = "productId must be > 0")
     private Long productId;
 
     @NotNull(message = "discount is required")

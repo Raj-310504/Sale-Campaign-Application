@@ -8,7 +8,9 @@ import com.example.SaleCampaign.entity.ProductModel;
 import com.example.SaleCampaign.repository.CampaignRepository;
 import com.example.SaleCampaign.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +33,10 @@ public class CampaignService {
         List<CampaignProduct> campaignProducts = new ArrayList<>();
         for (CampaignDiscountRequestDTO discountDTO : campaignRequestDTO.getCampaignDiscount()) {
             ProductModel product = productRepository.findById(discountDTO.getProductId())
-                    .orElseThrow(() -> new IllegalArgumentException("Product not found: " + discountDTO.getProductId()));
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.NOT_FOUND,
+                            "Product not found: " + discountDTO.getProductId()
+                    ));
 
             CampaignProduct campaignProduct = new CampaignProduct();
             campaignProduct.setCampaign(campaignModel);
