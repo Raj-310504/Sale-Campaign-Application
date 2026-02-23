@@ -27,5 +27,10 @@ public class ProductModel {
 
     private Double discount;
 
+    // Pre-campaign values, used to restore product pricing after campaign ends.
+    private Double baseCurrentPrice;
+
+    private Double baseDiscount;
+
     private Integer inventory;
 }
