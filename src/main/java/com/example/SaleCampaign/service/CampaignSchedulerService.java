@@ -16,6 +16,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -39,13 +40,14 @@ public class CampaignSchedulerService {
     @Transactional
     public void refreshCampaignsDiscounts() {
         try {
-            LocalDateTime now = LocalDateTime.now();
+            LocalDate today = LocalDate.now();
+            LocalDateTime changedAt = LocalDateTime.now();
 
-            // Active campaign
+            // Get Active campaign
             List<CampaignModel> active = campaignRepository
-                    .findByStartDateLessThanEqualAndEndDateGreaterThanEqual(now, now);
+                    .findByStartDateLessThanEqualAndEndDateGreaterThanEqual(today, today);
 
-            // If 2 campaigns at same time with same productId, sum discounts
+            // Sum discount per product
             Map<Long, Double> totalDiscountByProduct = new HashMap<>();
             for (CampaignModel c : active) {
                 for (CampaignProduct cp : c.getCampaignProducts()) {
@@ -54,7 +56,9 @@ public class CampaignSchedulerService {
                 }
             }
 
+            // collect products to process
             Set<Long> productIdsToProcess = new HashSet<>(totalDiscountByProduct.keySet());
+
             for (ProductModel product : productRepository.findByDiscountGreaterThan(0.0)) {
                 productIdsToProcess.add(product.getId());
             }
@@ -66,11 +70,13 @@ public class CampaignSchedulerService {
             }
 
             List<ProductModel> productsToProcess = productRepository.findAllById(productIdsToProcess);
+
             for (ProductModel product : productsToProcess) {
                 boolean campaignActive = totalDiscountByProduct.containsKey(product.getId());
                 double currentDiscount = safeDouble(product.getDiscount());
 
                 if (campaignActive) {
+                    // save campaign price once
                     if (product.getBaseCurrentPrice() == null) {
                         product.setBaseCurrentPrice(product.getCurrentPrice());
                     }
@@ -89,14 +95,16 @@ public class CampaignSchedulerService {
                         history.setMrp(product.getMrp());
                         history.setDiscount(targetDiscount);
                         history.setCurrentPrice(targetPrice);
-                        history.setChangedAt(now);
+                        history.setChangedAt(changedAt);
                         history.setReason(resolveReason(currentDiscount, targetDiscount));
 
                         productPriceHistoryRepository.save(history);
                         product.setDiscount(targetDiscount);
                         product.setCurrentPrice(targetPrice);
                     }
-                } else if (product.getBaseCurrentPrice() != null || product.getBaseDiscount() != null) {
+                }
+                // Campaign end
+                else if (product.getBaseCurrentPrice() != null || product.getBaseDiscount() != null) {
                     double restoreDiscount = safeDouble(product.getBaseDiscount());
                     double restorePrice = product.getBaseCurrentPrice() == null
                             ? safeDouble(product.getMrp())
@@ -109,7 +117,7 @@ public class CampaignSchedulerService {
                         history.setMrp(product.getMrp());
                         history.setDiscount(restoreDiscount);
                         history.setCurrentPrice(restorePrice);
-                        history.setChangedAt(now);
+                        history.setChangedAt(changedAt);
                         history.setReason(PriceChangeReason.CAMPAIGN_ENDED);
 
                         productPriceHistoryRepository.save(history);

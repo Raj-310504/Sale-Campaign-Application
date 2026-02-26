@@ -10,7 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -24,23 +24,23 @@ public class CampaignRequestDTO {
     private String title;
 
     @NotNull(message = "startDate is required")
-    @JsonFormat(pattern = "dd/MM/yyyy HH:mm")
-    private LocalDateTime startDate;
+    @JsonFormat(pattern = "dd/MM/yyyy")
+    private LocalDate startDate;
 
     @NotNull(message = "endDate is required")
-    @JsonFormat(pattern = "dd/MM/yyyy HH:mm")
-    private LocalDateTime endDate;
+    @JsonFormat(pattern = "dd/MM/yyyy")
+    private LocalDate endDate;
 
     @NotEmpty(message = "campaignDiscount is required")
     @Valid
     private List<CampaignDiscountRequestDTO> campaignDiscount;
 
-    @AssertTrue(message = "endDate must be after startDate")
+    @AssertTrue(message = "endDate must be on or after startDate")
     public boolean isDateRangeValid() {
         if (startDate == null || endDate == null) {
             return true;
         }
-        return endDate.isAfter(startDate);
+        return !endDate.isBefore(startDate);
     }
 
     @AssertTrue(message = "campaignDiscount contains duplicate productId values")
